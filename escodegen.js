@@ -1265,6 +1265,38 @@
             return result;
         },
 
+        ExportNamedDeclaration: function(stmt, flags){
+            // export { name } from "OK"
+            var specifiers = stmt.specifiers;
+            specifiers.forEach(function(spec, index){
+                if(spec.type === Syntax.ExportSpecifier){
+                    console.log(spec);
+                    this.ExportSpecifier(spec, Precedence.Sequence, flags);
+                }
+            },this);
+            // export { a as b, c as d } from "hello"
+            // export { a as b, c as d }
+            // export { }
+            // export default i = 20
+            console.log(stmt);
+        },
+
+        ExportAllDeclaration: function(stmt, flags){
+            var result = [ 'export' ];
+            result = join(result,   space + '*' + space);
+            if (stmt.source) {
+                result = join(result, [
+                    'from' + space,
+                    // ModuleSpecifier
+                    this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
+                    this.semicolon(flags)
+                ]);
+            } else {
+                result.push(this.semicolon(flags));
+            }
+            return result;
+        },
+
         ExpressionStatement: function (stmt, flags) {
             var result, fragment;
 
@@ -2421,6 +2453,9 @@
         var result,
             fragment;
 
+        if(typeof this[stmt.type] === "undefined"){
+            throw new Error(stmt.type + " is unknown type");
+        }
         result = this[stmt.type](stmt, flags);
 
         // Attach comments
